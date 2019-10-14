@@ -1,0 +1,17 @@
+﻿[
+    {
+        "host": "http://www.baidu.com",
+        "key": "七天",
+        "time": 10
+    },
+	{
+        "host": "http://www.baidu.com2",
+        "key": "七天",
+        "time": 10
+    },
+	{
+        "host": "http://www.baidu.com3",
+        "key": "七天",
+        "time": 10
+    }
+]
