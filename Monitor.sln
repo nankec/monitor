@@ -5,6 +5,14 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Monitor", "Monitor\Monitor.csproj", "{8B6BC157-3D8A-4074-9BAD-1E5875BCD382}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{772F99AD-1765-4A98-B81C-5C7BA34EBB18}"
+	ProjectSection(SolutionItems) = preProject
+		lib\log4net.dll = lib\log4net.dll
+		lib\log4net.xml = lib\log4net.xml
+		lib\Newtonsoft.Json.dll = lib\Newtonsoft.Json.dll
+		lib\Newtonsoft.Json.xml = lib\Newtonsoft.Json.xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
