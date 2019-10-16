@@ -37,17 +37,7 @@ namespace Monitor
                 toLog("开始监控");
                 Thread t = new Thread(monitorHandel);
                 t.IsBackground = true;
-                //try
-                //{
                 t.Start();
-                //}
-                //catch (Exception)
-                //{
-                //  t = new Thread(monitorHandel);
-                //t.IsBackground = true;
-                //t.Start();
-                //}
-
             }
         }
 
@@ -70,7 +60,7 @@ namespace Monitor
                 {
                     MessageBox.Show("找不到配置文件，初始化失败");
                 }
-                toLog("配置文件加载成功,监控数量:" + monitorList.Count);
+                toLog(",监控数量:" + monitorList.Count,false);
             }
             catch (Exception ex)
             {
@@ -84,21 +74,25 @@ namespace Monitor
             {
                 for (int i = 0; i < monitorList.Count; i++)
                 {
+                    if (showErrorThread!=null&&showErrorThread.IsAlive) {
+                        //toLog("等待处理中,请稍后...");
+                        i--;
+                        continue;
+                    } 
+
                     MonitorModel model = monitorList[i];
                     try
                     {
-                        //      Thread t = new Thread( new ParameterizedThreadStart(_monitorHandel));
-                        //    t.Start(model);
                         _monitorHandel(model);
-                        Thread.Sleep(1000);
+                        Thread.Sleep(500);
                     }
                     catch (Exception ex)
                     {
 
                     }
                 }
-                toLog("------------------------------------------");
-                toLog("休眠" + ConfigModel.getSleep());
+                //toLog("------------------------------------------");
+                LogHelper.Log("休眠" + ConfigModel.getSleep());
                 Thread.Sleep(ConfigModel.getSleep());
             }
         }
@@ -109,25 +103,25 @@ namespace Monitor
             try
             {
                 DateTime dt = DateTime.Now;
-                toLog("------------------------------------------");
-                toLog(model.host);
-                toLog("准备请求");
+                //toLog("------------------------------------------");
+                //toLog("");
+                toLog("请求:"+ model.host);
                 Uri uri = new Uri(model.host);
                 WebClient webClient = new WebClient();
                 byte[] byt = webClient.DownloadData(uri);
                 String content = System.Text.Encoding.UTF8.GetString(byt);
                 TimeSpan tm = DateTime.Now - dt;
-                toLog("请求完成,耗时:" + tm.Milliseconds);
+                toLog(" 耗时:" + tm.Milliseconds,false);
 
                 if (content.Contains(model.key))
                 {
                     return;
                 }
-                showError(model.host + "服务器可能异常，未返回指定的内容:" + model.key, model);
+                showError("未返回指定的内容:" + model.key, model);
             }
             catch (Exception ex)
             {
-                showError(model.host + "服务器访问异常," + ex.Message, model);
+                showError("访问异常," + ex.Message, model);
             }
 
         }
@@ -137,14 +131,9 @@ namespace Monitor
         private void showError(String msg, MonitorModel model)
         {
             toLog(msg);
-            //if (errorHost.Contains(model.host)) {
-            //  return;
-            //}
-            //            if (msgForm != null) return;
-            //            errorHost.Add(model.host);
             try
             {
-                Uri uri = new Uri(ConfigModel.getMsgHost() + msg);
+                Uri uri = new Uri(ConfigModel.getMsgHost() + model.host+msg);
                 WebClient webClient = new WebClient();
                 byte[] byt = webClient.DownloadData(uri);
                 String content = System.Text.Encoding.UTF8.GetString(byt);
@@ -155,22 +144,49 @@ namespace Monitor
                 LogHelper.Log("消息发送异常:" + ex);
             }
 
+            /*
             msgForm = new MsgForm(model.host + "异常", msg);
-            msgForm.ShowDialog();
-            //Thread t = new Thread(new ParameterizedThreadStart(showMsgForm));
-            //t.Start(msgForm);
+            msgForm.ShowDialog();//正常
+            */
+            showErrorThread = new Thread(new ParameterizedThreadStart(showMsgForm));
+            MsgModel msgModel = new MsgModel();
+            msgModel.Name = model.host + "异常";
+            msgModel.Remark = msg;
+            showErrorThread.Start(msgModel);
         }
 
-        private void toLog(String str)
+        private void toLog(String str) {
+            toLog(str,true);
+        }
+
+        private void toLog(String str,Boolean isNewLine)
         {
             LogHelper.Log(str);
-            richTextBox1.AppendText("\r\n" + str);
+            if (isNewLine) {
+                str = "\r\n" + str;
+            }
+            richTextBox1.AppendText(str);
+            Thread.Sleep(200);
         }
+
+        Thread showErrorThread = null;
 
         private void showMsgForm(Object obj)
         {
-            MsgForm msgForm = (MsgForm)obj;
-            msgForm.Show();
+            //toLog("发现异常，请及时处理，休眠:"+ ConfigModel.getWarnTime());
+            new Thread(new ThreadStart(() => {
+                //休眠多少x秒后，关掉显示错误消息的线程，让线程继续走
+                Thread.Sleep(ConfigModel.getWarnTime());
+                msgForm.Close();
+                showErrorThread.Abort();//结束线程，让它重新开始执行
+            })).Start();
+
+            MsgModel msgModel = (MsgModel)obj;
+            msgForm = new MsgForm(msgModel.Name, msgModel.Remark);
+            msgForm.ShowDialog();
+            if (showErrorThread != null && showErrorThread.IsAlive) {
+                showErrorThread.Abort();//结束线程，让它重新开始执行
+            }
         }
 
         private void richTextBox1_TextChanged(object sender, EventArgs e)
@@ -183,11 +199,6 @@ namespace Monitor
         private void richTextBox1_LinkClicked(object sender, LinkClickedEventArgs e)
         {
             System.Diagnostics.Process.Start(e.LinkText);
-        }
-
-        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-            //this.contextMenuStrip1.Show();
         }
 
         private void 显示窗口ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -224,7 +235,7 @@ namespace Monitor
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            LogHelper.Log("------系统推出------");
+            LogHelper.Log("------系统退出------");
         }
 
         private void Form1_MinimumSizeChanged(object sender, EventArgs e)

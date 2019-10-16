@@ -196,5 +196,9 @@ namespace awaken
         public static int getSleep() {
             return Convert.ToInt32(GetValue("sleep"));
         }
+
+        public static int getWarnTime() {
+            return Convert.ToInt32(GetValue("warnTime"));
+        }
     }
 }

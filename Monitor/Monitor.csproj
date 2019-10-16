@@ -57,6 +57,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MsgModel.cs" />
     <Compile Include="ConfigModel.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
